@@ -1,0 +1,986 @@
+Get Quote
+Please use the Swap API at your own discretion.
+The Jupiter UI at https://jup.ag/ contains multiple safeguards, warnings and default settings to guide our users to trade safer. Jupiter is not liable for losses incurred by users on other platforms.
+
+If you need clarification or support, please reach out to us in Discord.
+
+The Quote API enables you to tap into the Jupiter routing engine, which accesses the deep liquidity available within the DEXes of Solana's DeFi ecosystem. In this guide, we will walkthrough how you can get a quote for a specific token pair and other related parameters.
+
+Let’s Get Started
+In this guide, we will be using the Solana web3.js package.
+
+If you have not set up your environment to use the necessary libraries and the connection to the Solana network, please head over to Environment Setup.
+
+API Reference
+To fully utilize the Quote API, check out the Quote API Reference.
+
+Quote API
+The root URL of the Quote API is as such.
+
+https://api.jup.ag/swap/v1/quote
+
+The most common trading pair on Solana is SOL and USDC, to get a quote for this specific token pair, you need to pass in the required parameters such as:
+
+Parameters	Description
+inputMint	The pubkey or token mint address e.g. So11111111111111111111111111111111111111112
+outputMint	The pubkey or token mint address e.g. EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+amount	The number of input tokens before the decimal is applied, also known as the “raw amount” or “integer amount” in lamports for SOL or atomic units for all other tokens.
+slippageBps	The number of basis points you can tolerate to lose during time of execution. e.g. 1% = 100bps
+Get Quote
+Using the root URL and parameters to pass in, it is as simple as the example code below!
+
+const quoteResponse = await (
+    await fetch(
+        'https://api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000&slippageBps=50&restrictIntermediateTokens=true'
+    )
+  ).json();
+  
+console.log(JSON.stringify(quoteResponse, null, 2));
+
+
+Example response:
+
+{
+  "inputMint": "So11111111111111111111111111111111111111112",
+  "inAmount": "100000000",
+  "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "outAmount": "16198753",
+  "otherAmountThreshold": "16117760",
+  "swapMode": "ExactIn",
+  "slippageBps": 50,
+  "platformFee": null,
+  "priceImpactPct": "0",
+  "routePlan": [
+    {
+      "swapInfo": {
+        "ammKey": "5BKxfWMbmYBAEWvyPZS9esPducUba9GqyMjtLCfbaqyF",
+        "label": "Meteora DLMM",
+        "inputMint": "So11111111111111111111111111111111111111112",
+        "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "inAmount": "100000000",
+        "outAmount": "16198753",
+        "feeAmount": "24825",
+        "feeMint": "So11111111111111111111111111111111111111112"
+      },
+      "percent": 100
+    }
+  ],
+  "contextSlot": 299283763,
+  "timeTaken": 0.015257836
+}
+
+tip
+outAmount refers to the best possible output amount based on the route at time of quote, this means that slippageBps does not affect.
+
+What’s Next
+Now, you are able to get a quote, next steps is to submit a transaction to execute the swap based on the quote given. Let’s go!
+
+Additional Resources
+Restrict Intermediate Tokens
+restrictIntermediateTokens can be set to true . If your route is routed through random intermediate tokens, it will fail more frequently. With this, we make sure that your route is only routed through highly liquid intermediate tokens to give you the best price and more stable route.
+
+Legacy Transactions
+All Jupiter swaps are using Versioned Transactions and Address Lookup Tables. However, not all wallets support Versioned Transactions yet, so if you detect a wallet that does not support versioned transactions, you will need to set the asLegacyTransaction parameter to true.
+
+Adding Fees
+By using the Quote API in your app, you can add a fee to charge your users. You can refer to the platformFeeBps parameter and to add it to your quote and in conjuction, add feeAccount (it can be any valid token account) to your swap request.
+
+Direct Routes
+In some cases, you may want to restrict the routing to only go through 1 market. You can use the onlyDirectRoutes parameter to achieve this. This will ensure routing will only go through 1 market.
+
+note
+If there are no direct routes, there will be no quote.
+If there is only 1 market but it is illiquid, it will still return the route with the illiquid market.
+unfavorable trades
+Please be aware that using onlyDirectRoutes can often yield unfavorable trades or outcomes.
+
+Max Accounts
+In some cases, you may want to add more accounts to the transaction for specific use cases, but it might exceed the transaction size limit. You can use the maxAccounts parameter to limit the number of accounts in the transaction.
+
+note
+We recommend setting maxAccounts to 64
+Keep maxAccounts as large as possible
+maxAccounts is only an estimation and the actual number of accounts may vary
+Example: If maxAccounts is set to 46, the computed routes may drop DEXes/AMMs like Meteora DLMM that require more than 46 accounts.
+
+
+About Ultra API
+The Ultra API is built on top of the Swap API, with additional features to support seamless integration and execution of swap orders with Jupiter Swap.
+
+Features
+Request for swap orders from both Jupiter DEX Routing Engine and Jupiter Z (RFQ).
+Request for token balances of an account.
+Execute swap order seamlessly in a single API call.
+We handle the complexities of RPC connections, transaction landing, slippage protection and more.
+Provide world class customer support to your users, please refer to the Support Guidelines for more information.
+How to swap with Ultra API
+You can do it in just 2 steps:
+
+Request for a swap order from /ultra/v1/order.
+Post request to /ultra/v1/order/execute to execute the swap order and get the execution status.
+Additionally, you can request for token balances of an account from /ultra/v1/balances.
+Get started now with Ultra API
+
+FAQ
+What is the fee for using Ultra API?
+
+Ultra API takes 0.1% (or 0.05% depending on the tokens) of the swap amount as a fee.
+
+What is the rate limit for Ultra API?
+
+Currently, Ultra API has a rate limit of 120 requests per minute.
+
+Get Order
+The root URL of the Ultra API's order endpoint is as such.
+
+https://api.jup.ag/ultra/v1/order
+
+API Reference
+To fully utilize the Ultra API, check out the Ultra API Reference.
+
+Get Order
+To get a swap order, you need to pass in the required parameters such as:
+
+inputMint: The input token mint address
+outputMint: The output token mint address
+amount: The amount of input token to swap
+taker: The user's wallet address
+Note: If the taker is not provided, there will still be an Order Response with no transaction field.
+const orderResponse = await (
+    await fetch(
+        'https://api.jup.ag/ultra/v1/order?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000000&taker=3X2LFoTQecbpqCR7G5tL1kczqBKurjKPHhKSZrJ4wgWc'
+    )
+  ).json();
+
+console.log(JSON.stringify(orderResponse, null, 2));
+
+
+Order Response
+In the order response, you will receive a number of fields that are important to note of, such as the swapType, slippageBps, etc.
+
+The main fields you should need:
+
+transaction: The base64 encoded transaction that you need to sign before submitting to the network.
+requestId: The request ID of the order to be used in the Execute Order endpoint.
+Now, you are able to get a swap order, next steps is to make a post request to the Execute Order endpoint. Let's go!
+
+Example response of Aggregator Swap:
+
+{
+  "swapType": "aggregator",
+  "environment": "production",
+  "requestId": "668e8b71-a5ab-424e-83d6-51c9239e8bb5",
+  "inAmount": "100000000",
+  "outAmount": "12698391",
+  "otherAmountThreshold": "12577697",
+  "swapMode": "ExactIn",
+  "slippageBps": 100,
+  "priceImpactPct": "0.0000261921556639999999999997",
+  "routePlan": [
+    {
+      "swapInfo": {
+        "ammKey": "HTvjzsfX3yU6BUodCjZ5vZkUrAxMDTrBs3CJaq43ashR",
+        "label": "Meteora DLMM",
+        "inputMint": "So11111111111111111111111111111111111111112",
+        "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "inAmount": "100000000",
+        "outAmount": "12704744",
+        "feeAmount": "30003",
+        "feeMint": "So11111111111111111111111111111111111111112"
+      },
+      "percent": 100
+    }
+  ],
+  "inputMint": "So11111111111111111111111111111111111111112",
+  "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "feeBps": 5,
+  "taker": "3X2LFoTQecbpqCR7G5tL1kczqBKurjKPHhKSZrJ4wgWc",
+  "gasless": false,
+  "transaction": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAHDiVoTeB3jAGy1WcoJlYcZ1tvgdU0Aj6FlsjeUYBxRhGxHxf2IsqBZDc4TJCX0VVjBoDXZbW1kEsA6W7yfwIKt0c0yO+iiUVv7jZVSBDvh2kWWXekzYuRuKoLLfe0bYTKH0yv2bL0ozt8+tDaxIBCyDPmUdeiHiB+F3j79RbUrMBTZhX4Vq3GhdgfMEaJ2gWhCEHo53uZ5+KEQR/PV5YuzQbJfK6aXbCSNOqlVWxR07NAyRtSnrznUlEs5AUgIpB9pOGnzAThMjD7choVuWHDjdTxOb0dsRN3czgZ42ifRt1HAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4Wawfg/25zlUN6V1VjNx5VGHM9DdKxojsE6mEACIKeNoGAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAAC0P/on9df2SnTAmx8pWHneSwmrNt/J3VFLMhqns4zl6AR51VvyMcBu7nTFbs5oFQf9sbLeo/SOUQKxzaJWvBOPBt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKnPysPFxScORV16vbzghryUvk+VkoZUUM+RCAjwwCR3xwcKAAUCwFwVAAoACQPQyQAAAAAAAAcCAAQMAgAAAPD+FAYAAAAADAUEABUNBwmT8Xtk9ISudv0IBgACABMHDQEBDB4NAAQCDBMDCwwUERQPEAQCFRMOFAANDRIUBgEFDAkj5RfLl3rjrSoBAAAAJmQAAQDh9QUAAAAAF8PBAAAAAABLAAUNAwQAAAEJAXMwdFGIqEvFUBDTRIWStB1ygQ6vc5NqdjVNwLc0VV1HBM7S09cE1NHWcA==",
+  "prioritizationType": "ComputeBudget",
+  "prioritizationFeeLamports": 72329,
+  "lastValidBlockHeight": 301856775,
+  "dynamicSlippageReport": {
+    "slippageBps": 75,
+    "otherAmount": null,
+    "simulatedIncurredSlippageBps": null,
+    "amplificationRatio": null,
+    "categoryName": "solana",
+    "heuristicMaxSlippageBps": 100,
+    "rtseSlippageBps": 75,
+    "failedTxnEstSlippage": 55,
+    "priceMovementEstSlippage": 75,
+    "emaEstSlippage": 0
+  },
+  "totalTime": 549
+}
+
+
+Example response of RFQ Swap:
+
+{
+  "inputMint": "So11111111111111111111111111111111111111112",
+  "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "inAmount": "100000000",
+  "outAmount": "12619939",
+  "otherAmountThreshold": "12626253",
+  "swapMode": "ExactIn",
+  "slippageBps": 0,
+  "priceImpactPct": "0",
+  "routePlan": [
+    {
+      "swapInfo": {
+        "ammKey": "96ywtMs5KJNt2iAinr1U8KMzxjcY1FUEpgKHMYNz818g",
+        "label": "RFQ",
+        "inputMint": "So11111111111111111111111111111111111111112",
+        "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "inAmount": "100000000",
+        "outAmount": "12619939",
+        "feeAmount": "0",
+        "feeMint": "11111111111111111111111111111111"
+      },
+      "percent": 100
+    }
+  ],
+  "feeBps": 5,
+  "transaction": null,
+  "gasless": true,
+  "prioritizationType": "None",
+  "prioritizationFeeLamports": 0,
+  "requestId": "0abacc75-6a3c-d688-b633-ce2c14cef0fd",
+  "swapType": "rfq",
+  "quoteId": "25e8fc14-15f9-522d-8e18-5130e273b90f",
+  "maker": "96ywtMs5KJNt2iAinr1U8KMzxjcY1FUEpgKHMYNz818g",
+  "taker": null,
+  "expireAt": null,
+  "contextSlot": 0,
+  "platformFee": {
+    "amount": "6313",
+    "feeBps": 5
+  },
+  "totalTime": 425
+}
+
+Execute Order
+The root URL of the Ultra API's order endpoint is as such.
+
+https://api.jup.ag/ultra/v1/execute
+
+API Reference
+To fully utilize the Ultra API, check out the Ultra API Reference.
+
+Sign Transaction
+Using the Solana web3.js v1 library, you can sign the transaction as follows:
+
+// ... GET /order's response
+
+// Extract the transaction from the order response
+const transactionBase64 = orderResponse.transaction
+
+// Deserialize the transaction
+const transaction = VersionedTransaction.deserialize(Buffer.from(transactionBase64, 'base64'));
+
+// Sign the transaction
+transaction.sign([wallet.payer]);
+
+// Serialize the transaction to base64 format
+const signedTransaction = Buffer.from(transaction.serialize()).toString('base64');
+
+Execute Order
+By making a post request to the /execute endpoint, Jupiter executes the swap transaction on behalf of you/your users. This includes handling of slippage, priority fees, transaction landing and more.
+
+To make a post request to execute a swap order, you need to pass in the required parameters:
+
+signedTransaction: The signed transaction
+requestId: The order response's request ID
+/execute parameters
+Both required parameters are found in the order response, do note that the transaction field is the base64 encoded transaction that you need to sign before submitting to the network.
+
+const executeResponse = await (
+    await fetch('https://api.jup.ag/ultra/v1/execute', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            signedTransaction: signedTransaction,
+            requestId: orderResponse.requestId,
+        }),
+    })
+).json();
+
+Execute Response
+After making the post request to the /execute endpoint, you will receive a response with the status of the swap.
+
+if (executeResponse.status === "Success") {
+    console.log('Swap successful:', JSON.stringify(executeResponse, null, 2));
+    console.log(`https://solscan.io/tx/${executeResponse.signature}`);
+} else {
+    console.error('Swap failed:', JSON.stringify(executeResponse, null, 2));
+    console.log(`https://solscan.io/tx/${executeResponse.signature}`);
+}
+
+Example response of successful swap:
+
+{
+  "status": "Success",
+  "signature": "transaction signature",
+  "slot": "323598314",
+  "code": 0,
+  "inputAmountResult": "9995000",
+  "outputAmountResult": "1274698",
+  "swapEvents": [
+    {
+      "inputMint": "So11111111111111111111111111111111111111112",
+      "inputAmount": "9995000",
+      "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "outputAmount": "1274698"
+    }
+  ]
+}
+
+Example response of failed swap:
+
+{
+  "status": "Failed",
+  "signature": "transaction signature",
+  "error": "custom program error: #6023",
+  "code": 4615026,
+  "slot": "323597963"
+}
+
+Response Codes
+The following is a list of error codes that can be returned by the /execute endpoint.
+
+Ultra Endpoint Codes
+Code	Description	Debugging
+0	Success	-
+-1	Missing cached order	requestId not found in cache, likely expired or not found
+-2	Invalid signed transaction	signedTransaction is invalid, likely failed to sign the transaction correctly
+-3	Invalid message bytes	signedTransaction is invalid, likely due to incorrect usage of transaction field in the order response
+Aggregator Swap Type Codes
+Code	Description	Debugging
+-1000	Failed to land	Transaction failed to land on the network
+-1001	Unknown error	-
+-1002	Invalid transaction	-
+-1003	Transaction not fully signed	-
+-1004	Invalid block height	-
+RFQ Swap Type Codes
+Code	Description	Debugging
+-2000	Failed to land	-
+-2001	Unknown error	-
+-2002	Invalid payload	-
+-2003	Quote expired	User did not respond in time or RFQ provider did not execute in time
+-2004	Swap rejected	User or RFQ provider rejected the swap
+
+Get Balances
+The root URL of the Ultra API's order endpoint is as such.
+
+https://api.jup.ag/ultra/v1/balances
+
+API Reference
+To fully utilize the Ultra API, check out the Ultra API Reference.
+
+Get Balances
+The Ultra API supports a simple endpoint to get the token balances of an account, you just need to pass in the required parameter of the user's wallet address.
+
+const balancesResponse = await (
+  await fetch(`https://api.jup.ag/ultra/v1/balances/3X2LFoTQecbpqCR7G5tL1kczqBKurjKPHhKSZrJ4wgWc`)
+).json();
+
+console.log(JSON.stringify(balancesResponse, null, 2));
+
+Balances Response
+The balances response will return a list of token balances for the user's wallet address.
+
+Successful example response:
+
+{
+  "SOL": {
+    "amount": "0",
+    "uiAmount": 0,
+    "slot": 324307186,
+    "isFrozen": false
+  }
+}
+
+Failed example response:
+
+{
+  "error": "Invalid address"
+}
+
+Build Swap Transaction
+The Swap API is one of the ways for you to interact with the Jupiter Swap Aggregator program. Before you send a transaction to the network, you will need to build the transaction that defines the instructions to execute and accounts to read/write to.
+
+It can be complex to handle this yourself, but good news! Most of our APIs and SDKs just handles it for you, so you get a response with the transaction to be prepared and sent to the network.
+
+Use Swap API to handle it for you or ...
+If you are looking to interact with the Jupiter Swap Aggregator program in a different way, check out the other guides:
+
+Swap Instructions
+To compose with instructions and build your own transaction, read how to use the /swap-instructions in this section.
+
+Flash Fill or Cross Program Invocation (CPI)
+To interact with your own Solana program, read how to use the Flash Fill method or CPI in this section.
+
+Let’s Get Started
+In this guide, we will pick up from where Get Quote guide has left off.
+
+If you have not set up your environment to use the necessary libraries, the RPC connection to the network and successfully get a quote from the Quote API, please start at Environment Setup or get quote.
+
+API Reference
+To fully utilize the Swap API, check out the Swap API or Swap Instructions Reference.
+
+Swap API
+The root URL of the Swap API is as such.
+
+https://api.jup.ag/swap/v1/swap
+
+From the previous guide on getting a quote, now using the quote response and your wallet, you can receive a serialized swap transaction that needs to be prepared and signed before sending to the network.
+
+Get Serialized Transaction
+Using the root URL and parameters to pass in, it is as simple as the example code below!
+
+Optimizing for Transaction Landing is super super important!
+This code block includes additional parameters that our Swap API supports, such as estimating compute units, priority fees and slippage, to optimize for transaction landing.
+
+To understand how these parameters help, the next step, Send Swap Transaction guide will discuss them.
+
+const swapResponse = await (
+await fetch('https://api.jup.ag/swap/v1/swap', {
+    method: 'POST',
+    headers: {
+    'Content-Type': 'application/json',
+    // 'x-api-key': '' // enter api key here
+    },
+    body: JSON.stringify({
+    quoteResponse,
+    userPublicKey: wallet.publicKey.toString(),
+    
+    // ADDITIONAL PARAMETERS TO OPTIMIZE FOR TRANSACTION LANDING
+    // See next guide to optimize for transaction landing
+    dynamicComputeUnitLimit: true,
+    dynamicSlippage: true,
+    prioritizationFeeLamports: {
+          priorityLevelWithMaxLamports: {
+            maxLamports: 1000000,
+            priorityLevel: "veryHigh"
+          }
+        }
+    })
+})
+).json();
+
+console.log(swapResponse);
+
+From the above example, you should see this response.
+
+{
+    swapTransaction: 'AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAGDkS+3LuGTbs......+/oD9qb31dH6i0QZ2IHELXUX3Y1YeW79p9Stkqk12z4yvZFJiQ4GCQwLBwYQBgUEDggNTQ==',
+    lastValidBlockHeight: 279632475,
+    prioritizationFeeLamports: 9999,
+    computeUnitLimit: 388876,
+    prioritizationType: {
+        computeBudget: { 
+            microLamports: 25715,
+            estimatedMicroLamports: 785154 
+        }
+    },
+    dynamicSlippageReport: {
+        slippageBps: 50,
+        otherAmount: 20612318,
+        simulatedIncurredSlippageBps: -18,
+        amplificationRatio: '1.5',
+        categoryName: 'lst',
+        heuristicMaxSlippageBps: 100
+    },
+    simulationError: null
+}
+
+
+What’s Next
+Now, you are able to get a quote and use our Swap API to build the swap transaction for you. Next steps is to proceed to prepare and sign the transaction and send the signed transaction to the network.
+
+Let’s go sign and send!
+
+Additional Resources
+Build Your Own Transaction With Instructions
+If you prefer to compose with instructions instead of the provided transaction that is returned from the /swap endpoint (like the above example). You can post to /swap-instructions instead, it takes the same parameters as the /swap endpoint but returns you the instructions rather than the serialized transaction.
+
+note
+In some cases, you may add more accounts to the transaction, which may exceed the transaction size limits. To work around this, you can use the maxAccounts parameter in /quote endpoint to limit the number of accounts in the transaction.
+
+Refer to the GET /quote's maxAccounts guide for more details.
+
+/swap-instructions code snippet
+Build Your Own Transaction With Flash Fill Or CPI
+If you prefer to interact with the Jupiter Swap Aggregator program with your own on-chain program. There are 2 ways to do it, typically on-chain program call Cross Program Invocation (CPI) to interact with each other, we also have another method called Flash Fill built by Jupiter (due to limitations of CPI in the past).
+
+CPI is now recommended!
+As of January 2025, Jupiter Swap via CPI is recommended for most users.
+
+The Loosen CPI restriction feature has been deployed on Solana, you can read more here.
+
+Why Flash Fill?
+With Jupiter's complex routing, best prices comes at a cost. It often means more compute resources and accounts are required as it would route across multiple DEXes in one transaction.
+
+Solana transactions are limited to 1232 bytes, Jupiter is using Address Lookup Tables (ALTs) to include more accounts in one transaction. However, the CPI method cannot use ALTs, which means when you add more accounts to a Jupiter Swap transaction, it will likely fail if it exceeds the transaction size limits.
+
+Flash Fill allows the use of Versioned Transaction and ALTs, hence, reducing the total accounts used for a Jupiter Swap transaction.
+
+Send Swap Transaction
+Transaction sending can be very simple but optimizing for transaction landing can be challenging. This is critical in periods of network congestion when many users and especially bots are competing for block space to have their transactions processed.
+
+Improve Transaction Landing Tip
+By using Jupiter Swap API, you can enable Dynamic Slippage, Priority Fee estimation and Compute Unit estimation, all supported on our backend and served directly to you through our API.
+
+Let’s Get Started
+In this guide, we will pick up from where Get Quote and Build Swap Transaction guide has left off.
+
+If you have not set up your environment to use the necessary libraries, the RPC connection to the network and successfully get a quote from the Quote API, please start at Environment Setup or get quote.
+
+Prepare Transaction
+Who is the signer?
+The most important part of this step is to sign the transaction. For the sake of the guide, you will be using the file system wallet you have set up to sign and send yourself.
+
+However, for other production scenarios such as building your own program or app on top of the Swap API, you will need the user to be the signer which is often through a third party wallet provider, so do account for it.
+
+In the previous guide, we are able to get the swapTransaction from the Swap API response. However, you will need to reformat it to sign and send the transaction, here are the formats to note of.
+
+Formats	Description
+Serialized Uint8array format	The correct format to send to the network.
+Serialized base64 format	This is a text encoding of the Uint8array data, meant for transport like our Swap API or storage. You should not sign this directly.
+Deserialized format	This is the human-readable, object-like format before serialization. This is the state you will sign the transaction.
+Here's the code to deserialize and sign, then serialize.
+
+swapTransaction from the Swap API is a serialized transaction in the base64 format.
+Convert it to Uint8array (binary buffer) format.
+Deserialize it to a VersionedTransaction object to sign.
+Finally, convert it back to Uint8array format to send the transaction.
+const transactionBase64 = swapResponse.swapTransaction
+const transaction = VersionedTransaction.deserialize(Buffer.from(transactionBase64, 'base64'));
+console.log(transaction);
+
+transaction.sign([wallet.payer]);
+
+const transactionBinary = transaction.serialize();
+console.log(transactionBinary);
+
+Blockhash Validity
+If you look at the response of console.log(transaction);, you can see that our backend has already handled the blockhash and last valid block height in your transaction.
+
+The validity of a blockhash typically lasts for 150 slots, but you can manipulate this to reduce the validity of a transaction, resulting in faster failures which could be useful in certain scenarios.
+
+Read more about transaction expiry here.
+
+Send Transaction
+Transaction Sending Options
+Finally, there are a 2 transaction sending options that we should take note of. Depending on your use case, these options can make a big difference to you or your users. For example, if you are using the Swap API as a payment solution, setting higher maxRetries allows the transaction to have more retries as it is not as critical compared to a bot that needs to catch fast moving markets.
+
+Transaction Sending Options
+const signature = await connection.sendRawTransaction(transactionBinary, {
+    maxRetries: 2,
+    skipPreflight: true
+});
+
+Transaction Confirmation
+In addition, after sending the transaction, it is always a best practice to check the transaction confirmation state, and if not, log the error for debugging or communicating with your users on your interface. Read more about transaction confirmation tips here.
+
+const confirmation = await connection.confirmTransaction({signature,}, "finalized");
+
+if (confirmation.value.err) {
+    throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}\nhttps://solscan.io/tx/${signature}/`);
+} else console.log(`Transaction successful: https://solscan.io/tx/${signature}/`);
+
+
+Swap Transaction Executed!
+If you have followed the guides step by step without missing a beat, your transaction should theoretically land and you can view the link in console log to see the transaction.
+
+Oh? Transaction Not Landing?
+As the Solana network grew and increased in activity over the years, it has become more challenging to land transactions. There are several factors that can drastically affect the success of your transaction:
+
+Setting competitive priority fee
+Setting accurate amount of compute units
+Managing slippage effectively
+Broadcasting transaction efficiently
+Other tips
+How Jupiter Estimates Priority Fee?
+You can pass in prioritizationFeeLamports to Swap API where our backend will estimate the Priority Fee for you.
+
+We are using Triton’s getRecentPrioritizationFees to estimate using the local fee market in writable accounts of the transaction (comparing to the global fee market), across the past 20 slots and categorizing them into different percentiles.
+
+Read more about Priority Fee here.
+
+Parameters	Description
+maxLamports	A maximum cap applied if the estimated priority fee is too high. This is helpful when you have users using your application and can be a safety measure to prevent overpaying.
+global	A boolean to choose between using a global or local fee market to estimate. If global is set to false, the estimation focuses on fees relevant to the writable accounts involved in the instruction.
+priorityLevel	A setting to choose between the different percentile levels. Higher percentile will have better transaction landing but also incur higher fees.
+
+medium: 25th percentile
+high: 50th percentile
+veryHigh: 75th percentile
+const swapResponse = await (
+  await fetch('https://api.jup.ag/swap/v1', {
+      method: 'POST',
+      headers: {
+      'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+          quoteResponse,
+          userPublicKey: wallet.publicKey.toBase58(),
+          prioritizationFeeLamports: {
+              priorityLevelWithMaxLamports: {
+                  maxLamports: 10000000,
+                  global: false,
+                  priorityLevel: "veryHigh"
+              }
+          }
+      })
+  })
+).json();
+
+How Jupiter Estimates Compute Unit Limit?
+You can pass in dynamicComputeUnitLimit to Swap API where our backend will estimate the Compute Unit Limit for you.
+
+When true, it allows the transaction to utilize a dynamic compute unit rather than using incorrect compute units which can be detrimental to transaction prioritization. Additionally, the amount of compute unit used and the compute unit limit requested to be used are correlated to the amount of priority fees you pay.
+
+Read more about Compute Budget, Compute Unit, etc here.
+
+const swapTransaction = await (
+  await fetch('https://api.jup.ag/swap/v1', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      quoteResponse,
+      userPublicKey: wallet.publicKey.toBase58(),
+      dynamicComputeUnitLimit: true
+    })
+  })
+).json();
+
+How Jupiter Estimates Slippage?
+Apart from the static slippageBps parameter, Jupiter has iterated on different designs to estimate slippage better.
+
+You can pass in dynamicSlippage=true to Swap API where our backend will estimate a slippage value to be used for the specific quote and transaction for you.
+
+Our backend will simulate slippage closer to execution and calculate an optimal value based on the token category, historical swap's slippage data and other heuristics.
+
+note
+To understand Dynamic Slippage better, you can reference this repository to understand some of the configs used.
+
+Dynamic Slippage Config
+
+const swapTransaction = await (
+  await fetch('https://api.jup.ag/swap/v1', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      quoteResponse,
+      userPublicKey: wallet.publicKey.toBase58(),
+      dynamicSlippage: true,
+    })
+  })
+).json();
+
+How Jupiter Broadcast Transactions?
+Transaction broadcasting is the process of submitting a signed transaction to the network so that validators can verify, process, and include it in a block.
+
+Broadcasting Through RPCs
+After you’ve built and signed your transaction, the signed transaction is serialized into a binary format and sent to the network via a Solana RPC node. The RPC node will verify and relay the transaction to the leader validator responsible for producing the next block.
+
+Read more about how RPC nodes broadcast transactions.
+
+This is the most typical method to send transactions to the network to get executed. It is simple but you need to make sure the transactions are:
+
+Send in the serialized transaction format.
+Use fresh blockhash and last valid blockheight.
+Use optimal amount of priority fees and compute unit limit.
+Free of error.
+Utilize retries.
+Configure your RPCs
+Optional but you can send your transaction to a staked RPC endpoint also known as Stake-Weighted Quality of Service (SWQoS).
+Used dedicated RPC services versus free or shared, depending on how critical your usage is.
+Propagate to multiple RPC rather than reliant on one.
+Broadcasting Through Jito
+To include Jito Tips in your Swap transaction, you can do specify in the Swap API parameters. However, please take note of these when sending your transaction to Jito and you can find thsese information in their documentation:
+
+You need to submit to a Jito RPC endpoint for it to work.
+You need to send an appropriate amount of Jito Tip to be included to be processed.
+More about Jito
+You can leverage Jito to send transactions via tips for faster inclusion and better outcomes. Similar to Priority Fees, Jito Tips incentivize the inclusion of transaction bundles during block production, enhancing users' chances of securing critical transactions in competitive scenarios.
+
+Additionally, Jito enables bundling transactions to ensure they execute together or not at all, helping protect against front-running and other MEV risks through “revert protection” if any part of the sequence fails, all while reducing transaction latency for timely execution.
+
+Read more about how Jito works and other details here.
+
+const swapTransaction = await (
+  await fetch('https://api.jup.ag/swap/v1', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      quoteResponse,
+      userPublicKey: wallet.publicKey.toBase58(),
+      prioritizationFeeLamports: {
+        jitoTipLamports: 1000000 // note that this is FIXED LAMPORTS not a max cap
+      }
+    })
+  })
+).json();
+
+Add Fees To Swap
+info
+As of January 2025, you no longer need to use the Referral Program to set up a referralAccount and referralTokenAccount to collect fees from the swaps you provide to the end users.
+
+Simply, just pass in any valid token account as the feeAccount parameter in the Swap API.
+
+note
+You can still find information about the Referral Program.
+
+The Referral Program is an open source program by Jupiter to provide referral fees for integrators who are integrating Jupiter Swap and Jupiter Limit Order. You can check out the code here to gain a better understanding of how it works.
+
+Use Case
+By default, there are zero protocol fees on Jupiter Swap. Integrators have the option to introduce a platform fee denoted in basis points, e.g. 20 bps for 0.2% of the token input or output.
+
+Important Notes
+Input mint or the output mint on the swap for ExactIn.
+Input mint ONLY on the swap for ExactOut.
+Example, if you swap JUP to USDC, you cannot take fees in SOL, it has to be part of the swap.
+It does not support Token2022 tokens.
+Referral Program is no longer required.
+Via Referral Program (No longer required for Swap API)
+1. Set up
+You will need to complete the prerequisites and understanding of Environment Setup and Get Quote and Swap guide as this is reliant on the Swap API.
+
+2. Set your fee in Quote
+Setting your fee is simple, just add platformFeeBps parameter to the /quote endpoint.
+
+In this example, we set platformFeeBps to 20 which equates to 0.2%.
+
+const quoteResponse = await (
+    await fetch(
+        'https://api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000&slippageBps=50&restrictIntermediateTokens=true&platformFeeBps=20'
+    )
+  ).json();
+  
+console.log(JSON.stringify(quoteResponse, null, 2));
+
+
+3. Set your feeAccount in Swap
+In the /swap endpoint, you will need to pass in the feeAccount parameter. The feeAccount is any token account that will receive the fees from the swap. Do ensure that the token account is initialized and is the correct mint to receive the fees in.
+
+const swapResponse = await (
+    await fetch('https://api.jup.ag/swap/v1/swap', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            quoteResponse,
+            userPublicKey: wallet.publicKey.toBase58(), // Pass in actual referred user in production
+            feeAccount: feeAccount,
+        })
+    })
+).json();
+
+4. Sign and send transaction
+Finally, the user can sign the transaction and it can be submitted to the network to be executed. You can refer to the Send Swap Transaction guide to complete this step.
+
+Payments Through Swap
+The Jupiter Swap API can be utilized such that you, a merchant can allow your customer to pay in any tokens while you still receive in your preferred token payment at the end of the transaction.
+
+Use Case
+Let’s set the stage. You are selling a jupcake!!! to your customer and merchant might only accept in 1 USDC, but Alice only has 1 SOL for various reasons. Well, you’re at the right place! By using the Swap API, merchant can let customer pay in SOL while merchant still receive USDC in order to complete the payment for a jupcake.
+
+Customer has 1,000,000 SOL.
+Merchant sells 1 jupcake for 1 USDC.
+Use the Swap API to swap exactly 1 USDC output from Customer's SOL.
+Merchant receives the 1 USDC, as planned!
+Let’s Get Started
+1. Setup
+You will need slightly different imports and also remember to set up connection to an RPC. If you have not set up the other typical libraries or are familiar with the Swap API, please follow this Environment Setup and Get Quote and Swap guide.
+
+npm i @solana/spl-token
+
+import { PublicKey, Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { Wallet } from '@coral-xyz/anchor';
+import fetch from 'cross-fetch';
+
+Before we start getting a quote and swap transaction, for example sake, we will need to prepare your and Alice's accounts. In production scenario, you will need to dynamically pass this in and allow users to sign in their device interfaces.
+
+Do note that you will need to have already set up:
+
+A wallet in your machine to simulate yourself as the customer as the customer is the signer of the transaction (similar to how we set up in Environment Setup).
+trackingAccount is an additional Solana Account you can pass in to track only Jupiter transactions easily.
+Set Up Accounts
+const customerAccount = new Wallet(...);
+
+console.log("customerAccount:", customerAccount.publicKey.toBase58());
+
+const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'); // Your preferred token payment
+
+const merchantAccount = new PublicKey('ReplaceWithMerchantPubkey');
+// const trackingAccount = new PublicKey('ReplaceWithPubkey');
+
+console.log("USDC_MINT:", USDC_MINT.toBase58());
+console.log("merchantAccount:", merchantAccount.toBase58());
+// console.log("trackingAccount:", trackingAccount.toBase58());
+
+Set Up destinationTokenAccount
+One more thing you will need to set up! Later on, you will need to pass in destinationTokenAccount which will be your token account for your preferred token payment mint. Do note that it is the merchant's token account and it needs to be initialized.
+
+// Get the associated token account for the merchant wallet
+const merchantUSDCTokenAccount = await getAssociatedTokenAddress(
+	  USDC_MINT,
+	  merchantAccount,
+	  true,
+	  TOKEN_PROGRAM_ID,
+	  ASSOCIATED_TOKEN_PROGRAM_ID
+);
+
+console.log("merchantUSDCTokenAccount:", merchantUSDCTokenAccount.toBase58());
+
+2. Set swapMode to ExactOut in Quote
+Next, the merchant have to Get Quote for the customer. We are using the ExactOut mode because we know exactly how much output amount (1 USDC) the merchant want to receive but not sure how much input amount the customer should pay with.
+
+By getting a quote first, the customer can know upfront the specific amount of input token before they approve and sign the transaction.
+
+Limitations of ExactOut
+Currently, there are some limitations as ExactOut is not widely supported across all DEXes.
+
+Supported DEXes are only Orca Whirlpool, Raydium CLMM, and Raydium CPMM.
+NOT ALL token pairs may be available.
+const quoteResponse = await (
+    await fetch(
+        'https://api.jup.ag/swap/v1/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=100000&slippageBps=50&restrictIntermediateTokens=true&swapMode=ExactOut'
+    )
+  ).json();
+  
+console.log(JSON.stringify(quoteResponse, null, 2));
+
+
+From the this quote, you should get part of the response like this, where amount specified in the query parameter represents the outAmount in the response and of course, swapMode: ExactOut.
+
+{
+    "inputMint": "So11111111111111111111111111111111111111112",
+    "inAmount": "4434914",
+    "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "outAmount": "1000000",
+    "otherAmountThreshold": "4434914",
+    "swapMode": "ExactOut",
+    ...
+}
+
+3. Set destinationTokenAccount in Swap
+The merchant then retrieves the serialized swap transaction, but the merchant need to specify the destinationTokenAccount in the parameters — this will build the swap transaction to swap but send to the merchant's specified token account which we defined earlier.
+
+The destinationTokenAccount should be the merchant’s token account to receive the payment in. Also do note that customerAccount should be accounted for. You can refer to the Build Swap Transaction guide for other parameters to be passed in.
+
+const swapResponse = await (
+    await fetch('https://api.jup.ag/swap/v1/swap', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            quoteResponse,
+            userPublicKey: customerAccount.publicKey.toBase58(),
+            destinationTokenAccount: merchantUSDCTokenAccount.toBase58(),
+            // trackingAccount: trackingAccount.toBase58(),
+        })
+    })
+).json();
+
+console.log(swapResponse);
+
+4. Prepare Transaction
+We have walked through the steps here and explained some of the code, you can refer to Send Swap Transaction - Prepare Transaction. The main difference for payments is to ensure that the customer is the fee payer (the merchant can be generous and be the fee payer too!) and the signer.
+
+const transactionBase64 = swapResponse.swapTransaction
+const transaction = VersionedTransaction.deserialize(Buffer.from(transactionBase64, 'base64'));
+
+transaction.feePayer = customerAccount.publicKey;
+
+transaction.sign([customerAccount.payer]);
+
+const transactionBinary = transaction.serialize();
+
+5. Send Transaction
+We have walked through the steps here and explained some of the code, you can refer to Send Swap Transaction - Send Transaction. The main difference for payments is, you might want to try adjusting maxRetries to a higher count as it is not time sensitive and ideally this is used with tighter slippage and ensuring the inputMint is not too unstable.
+
+Do note that more retries will cause the user to wait slightly longer, so find the balance between the two. Read more here: https://solana.com/docs/advanced/retry.
+
+const signature = await connection.sendRawTransaction(transactionBinary, {
+    maxRetries: 10,
+    preflightCommitment: "finalized",
+});
+  
+const confirmation = await connection.confirmTransaction({ signature }, "finalized");
+
+if (confirmation.value.err) {
+    throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}\nhttps://solscan.io/${signature}/`);
+} else console.log(`Transaction successful: https://solscan.io/tx/${signature}/`);
+
+
+The succeeded Swap Transaction should show:
+
+Token A swaps from the customer's token account
+Token A swap to Token B
+Token B sends to the merchant's token account
+Swap In Solana Unity SDK (C#)
+Jupiter is fully supported within the Solana.Unity-SDK. The core library is independent of Unity and can be incorporated into Unreal Engine using the UnrealCLR library or in a C# backend.
+
+Using the Solana.Unity-SDK, game developers can effortlessly incorporate Jupiter swaps into their games and achieve cross-platform compatibility without the need to modify a single line of code.
+
+Within the SDK, the Jupiter Swap API can also be used as a payment method, enabling you to utilize Jupiter + SolanaPay for facilitating user payments with any SPL token, allowing pricing in USDC or other tokens.
+
+Documentation
+For the detailed documentation, please visit: Solana Unity SDK Jupiter Documentation
+
+Demos
+Watch this demo video showcasing an in-game swap powered by the Jupiter integration: Watch Demo Video
+Explore a live game demo here: Live Demo
+Swap Terminal
+Jupiter Terminal is an open-sourced, lite version of Jupiter. This terminal provides end-to-end swap functionality by linking it in your HTML with just a few lines of code.
+
+Jupiter Terminal References
+Terminal Playground: To play with different settings,features and styling.
+Open Source Repository: To understand and make use of the Jupiter Terminal better.
+API Type Reference: To utilize the different references.
+Core Features
+Feature	Details
+Lightweight	-main-v3.js bundle (~70KB gzipped)
+- App bundle (~1.1 MB gzipped) loads on-demand when init() is called.
+- Preload app bundle with data-preload attributes.
+Agnostic	- Works with any application in Integrated, Widget, or Modal format.
+- Compatible with frameworks like React, Plain HTML, etc.
+- Responsive to all screen sizes.
+Customization	- Supports Swap, Payment, or Ape tokens use cases.
+- Allows fixed input/output amounts or mint.
+- Offers ExactIn or ExactOut swap modes.
+Built-in Wallets	- Wallet Standard support, powered by Unified Wallet Kit.
+- Passthrough wallet from your app.
+Fees Support	- Customizable fees and trackable via Referral Dashboard.
+API References
+Typescript Support
+
+Fee Support
+
+Resuming / Closing Activity
+
+Token List
+
+onSuccess / onSwapError Callback
+
+Customizing Styles
+
+Edit this page
+Next
+Terminal Walkthrough

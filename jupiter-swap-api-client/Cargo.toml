@@ -1,0 +1,17 @@
+[package]
+name = "jupiter-swap-api-client"
+version = "0.1.0"
+description = "Jupiter Swap API rust client"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1.0.159", features = ["derive"] }
+serde_json = "1.0.95"
+solana-sdk = "=1.16.23"
+solana-account-decoder = "=1.16.23"
+thiserror = "2"
+base64 = "0.22.1"
+serde_qs = "0.13.0"
+reqwest = { version = "0.12", features = ["json"] }
+rust_decimal = "1.36.0"
